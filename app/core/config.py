@@ -10,11 +10,7 @@ env_path = os.path.join(data_path, 'app.env')
 
 class Settings(BaseSettings):
     DATABASE_URL: str | None
-    THUNDER_URL: str | None
-    THUNDER_FILE_ID: str | None
-    THUNDER_AUTHORIZATION: str | None
     PROXY: str | None
-    BYPASS_URL: str | None
     FLARE_SOLVERR_URL: str | None
 
     class Config:

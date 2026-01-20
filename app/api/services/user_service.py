@@ -2,17 +2,19 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
+from app.schemas.response import error, success
 
 
 def create_user(db: Session, username: str, password: str):
+    user = db.query(User).first()
+    if user:
+        return error(f"已存在用户,无法再次创建账号")
     user = User(
         username=username,
         hashed_password=get_password_hash(password)
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    return success()
 
 
 def authenticate_user(db: Session, username: str, password: str):
@@ -22,3 +24,11 @@ def authenticate_user(db: Session, username: str, password: str):
     if not verify_password(password, user.hashed_password):
         return None
     return user
+
+
+def update_user(db: Session, username: str, password: str):
+    user = db.query(User).first()
+    user.username = username
+    user.hashed_password = get_password_hash(password)
+    db.flush()
+    return success()

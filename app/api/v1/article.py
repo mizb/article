@@ -32,8 +32,7 @@ def get_torrent(keyword, db: Session = Depends(get_db)):
 
 @router.get("/download")
 def download_article(tid: int, user: User = Depends(get_current_user)):
-    threading.Thread(target=lambda: article_service.download_article(tid)).start()
-    return success("已创建下载任务")
+    return article_service.download_article(tid)
 
 
 @router.get("/download/manul")

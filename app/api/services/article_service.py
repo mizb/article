@@ -9,7 +9,7 @@ from app.models import Config, DownloadLog
 from app.models.article import Article
 from app.modules.downloadclient import downloadManager
 from app.schemas.article import ArticleQuery
-from app.schemas.response import success
+from app.schemas.response import success, error
 
 
 def get_article_list(db: Session, query: ArticleQuery) -> Dict:
@@ -17,7 +17,7 @@ def get_article_list(db: Session, query: ArticleQuery) -> Dict:
         DownloadLog.tid == Article.tid
     )
 
-    q = db.query(Article,in_stock_expr.label("in_stock"))
+    q = db.query(Article, in_stock_expr.label("in_stock"))
     if query.keyword:
         q = q.filter(Article.title.ilike(f"%{query.keyword}%"))
     if query.section:
@@ -133,9 +133,13 @@ def get_category(db: Session):
     return success(list(grouped.values()))
 
 
-def calc_score(rule, section, sub_type):
+import re
+
+
+def calc_score(rule, section, sub_type, title):
     score = 0
 
+    # category 评分
     if rule["category"] == section:
         score += 10
     elif rule["category"] == "ALL":
@@ -143,6 +147,7 @@ def calc_score(rule, section, sub_type):
     else:
         return 0
 
+    # subCategory 评分
     if rule["subCategory"] == sub_type:
         score += 5
     elif rule["subCategory"] == "ALL":
@@ -150,15 +155,26 @@ def calc_score(rule, section, sub_type):
     else:
         return 0
 
+    # regex 评分
+    rule_regex = rule.get("regex")
+
+    if rule_regex:
+        if re.search(rule_regex, title):
+            score += 20      # 正则命中，高权重
+        else:
+            return 0         # 正则不匹配，直接淘汰
+    else:
+        score += 1          # 没有 regex，兜底分
+
     return score
 
 
-def match_best_rules(rules, section, sub_type):
+def match_best_rules(rules, section, sub_type, title):
     best_score = 0
     best_rules = []
 
     for rule in rules:
-        score = calc_score(rule, section, sub_type)
+        score = calc_score(rule, section, sub_type, title)
         if score == 0:
             continue
 
@@ -169,6 +185,8 @@ def match_best_rules(rules, section, sub_type):
             best_rules.append(rule)
 
     return best_rules
+
+
 
 
 def download_magnet(tid, magnet, downloader, save_path):
@@ -194,16 +212,20 @@ def download_article(tid: int):
         sub_type = article.sub_type
         rules = json.loads(str(config.content))
         if rules:
-            best_rules = match_best_rules(rules, section, sub_type)
+            best_rules = match_best_rules(rules, section, sub_type,article.title)
             for rule in best_rules:
                 is_success = download_magnet(article.tid, article.magnet, rule['downloader'], rule['savePath'])
                 if is_success:
                     success_count += 1
-    return success(f"成功添加：{success_count}")
+    if success_count > 0:
+        return success("成功创建下载任务")
+    return error("创建下载任务失败")
 
 
 def manul_download(tid, downloader, save_path):
     with session_scope() as db:
         article = db.get(Article, tid)
     is_success = download_magnet(article.tid, article.magnet, downloader, save_path)
-    return success(is_success)
+    if is_success:
+        return success("成功创建下载任务")
+    return error("创建下载任务失败")
