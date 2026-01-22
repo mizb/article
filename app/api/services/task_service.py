@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.task import Task
 from app.models.task_log import TaskLog
-from app.scheduler import restart_scheduler, FUNC_MAP
+from app.scheduler import restart_scheduler, FUNC_MAP, find_func
 from app.schemas.response import success
 from app.schemas.task import TaskForm, TaskLogFilter
 
@@ -56,7 +56,7 @@ def run_task(db: Session, task_id: int):
         kwargs = {}
         if args:
             kwargs = json.loads(str(args))
-        func = FUNC_MAP[task.task_func]
+        func = find_func(task.task_func)["func"]
         threading.Thread(
             target=func,
             kwargs=kwargs
@@ -87,3 +87,7 @@ def page_task(db: Session, params: TaskLogFilter):
         "total": total,
         "items": items
     })
+
+
+def list_func():
+    return success(FUNC_MAP)

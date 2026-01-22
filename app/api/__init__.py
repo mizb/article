@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.v1 import article, user, config, task
+from app.api.v1 import article, user, config, task, download_log
 from app.core.database import Base, engine, session_scope
 from app.models import Config
 from app.modules.downloadclient import downloadManager
@@ -45,3 +45,4 @@ app.include_router(article.router, prefix='/api/v1/articles', tags=["article"])
 app.include_router(user.router, prefix='/api/v1/users', tags=["user"])
 app.include_router(config.router, prefix='/api/v1/config', tags=["config"])
 app.include_router(task.router, prefix='/api/v1/tasks', tags=["task"])
+app.include_router(download_log.router, prefix='/api/v1/download-log', tags=["download-log"])

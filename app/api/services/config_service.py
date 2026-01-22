@@ -30,3 +30,15 @@ def get_option(key, db: Session):
         data = json.loads(str(config.content))
         return success(data)
     return success()
+
+
+def list_all_downloader(db: Session):
+    configs = db.query(Config).filter(Config.key.ilike('Downloader.%')).all()
+    downloaders = []
+    for config in configs:
+        content = config.content
+        downloader = json.loads(str(content))
+        if downloader.get("save_paths"):
+            downloader['id'] = config.key.replace('Downloader.', '')
+            downloaders.append(downloader)
+    return success(downloaders)

@@ -49,12 +49,13 @@ def get_article_list(db: Session, query: ArticleQuery) -> Dict:
     for article, in_stock in rows:
         setattr(article, "in_stock", in_stock)
         items.append(article)
-
+    has_more = len(items) == per_page
     return success({
         "page": page,
-        "per_page": per_page,
+        "pageSize": per_page,
         "total": total,
-        "items": items
+        "items": items,
+        "hasMore": has_more
     })
 
 
@@ -160,11 +161,11 @@ def calc_score(rule, section, sub_type, title):
 
     if rule_regex:
         if re.search(rule_regex, title):
-            score += 20      # 正则命中，高权重
+            score += 20  # 正则命中，高权重
         else:
-            return 0         # 正则不匹配，直接淘汰
+            return 0  # 正则不匹配，直接淘汰
     else:
-        score += 1          # 没有 regex，兜底分
+        score += 1  # 没有 regex，兜底分
 
     return score
 
@@ -185,8 +186,6 @@ def match_best_rules(rules, section, sub_type, title):
             best_rules.append(rule)
 
     return best_rules
-
-
 
 
 def download_magnet(tid, magnet, downloader, save_path):
@@ -212,7 +211,7 @@ def download_article(tid: int):
         sub_type = article.sub_type
         rules = json.loads(str(config.content))
         if rules:
-            best_rules = match_best_rules(rules, section, sub_type,article.title)
+            best_rules = match_best_rules(rules, section, sub_type, article.title)
             for rule in best_rules:
                 is_success = download_magnet(article.tid, article.magnet, rule['downloader'], rule['savePath'])
                 if is_success:
