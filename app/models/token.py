@@ -7,7 +7,6 @@ from app.core.database import Base
 
 class Token(Base):
     __tablename__ = "token"
-    __table_args__ = {"schema": "sht"}
 
     id: int = Column(BigInteger, primary_key=True, autoincrement=True, index=True)
     token_key: str = Column(String(32), nullable=False)

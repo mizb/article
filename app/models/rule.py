@@ -7,7 +7,6 @@ from app.core.database import Base
 
 class Rule(Base):
     __tablename__ = "rule"
-    __table_args__ = {"schema": "sht"}
 
     id: int = Column(BigInteger, primary_key=True, autoincrement=True, index=True)
     section: str = Column(String(32), nullable=False)
