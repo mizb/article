@@ -13,3 +13,8 @@ router = APIRouter()
 @router.post('/search')
 def page_task_log(params: DownloadLogFilter, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return download_log_service.get_download_log_page(db, params)
+
+
+@router.get('/state')
+def get_download_state(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    return download_log_service.get_download_state(db)

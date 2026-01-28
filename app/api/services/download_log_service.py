@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 
 from app.models import DownloadLog, Article
 from app.schemas.download_log import DownloadLogFilter
@@ -71,4 +71,24 @@ def get_download_log_page(
             }
             for r in rows
         ],
+    })
+
+
+def get_download_state(db: Session):
+    download_count = db.query(DownloadLog).count()
+    rows = (
+        db.query(
+            Article.section,
+            func.count(Article.tid).label("count")
+        )
+        .join(DownloadLog, DownloadLog.tid == Article.tid)
+        .group_by(Article.section)
+        # .having(func.count(Article.tid) > 5)
+        .all()
+    )
+
+    new_rows = [row._mapping for row in rows]
+    return success({
+        "download_count": download_count,
+        "section_count": new_rows,
     })

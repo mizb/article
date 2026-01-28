@@ -1,6 +1,8 @@
+import io
 from typing import Dict, List
 
-from sqlalchemy import func, exists
+from fastapi import File
+from sqlalchemy import func, exists, inspect, select
 from sqlalchemy.orm import Session
 
 from app.core.database import session_scope
@@ -10,6 +12,7 @@ from app.modules.downloadclient.manager import downloadManager
 from app.modules.notification.manager import pushManager
 from app.schemas.article import ArticleQuery
 from app.schemas.response import success, error
+import pandas as pd
 
 
 def get_article_list(db: Session, query: ArticleQuery) -> Dict:
@@ -209,6 +212,8 @@ def download_article(tid: int):
         section = article.section
         category = article.category
         best_rules = match_best_rules(rules, section, category, article.title)
+        if not best_rules:
+            return error("未匹配到合适的下载路径")
         for rule in best_rules:
             is_success = download_magnet(article.tid, article.magnet, rule.downloader, rule.save_path)
             if is_success:
@@ -226,3 +231,56 @@ def manul_download(tid, downloader, save_path):
     if is_success:
         return success(message="成功创建下载任务")
     return error("创建下载任务失败")
+
+
+async def import_excel(file, db: Session):
+    contents = await file.read()
+    filename = file.filename.lower()
+
+    try:
+        if filename.endswith(".xlsx"):
+            df = pd.read_excel(io.BytesIO(contents), engine="openpyxl")
+        elif filename.endswith(".xls"):
+            df = pd.read_excel(io.BytesIO(contents), engine="xlrd")
+        elif filename.endswith(".csv"):
+            df = pd.read_csv(io.BytesIO(contents))
+        else:
+            return error("不支持的文件格式")
+    except Exception as e:
+        return error(f"解析excel失败:{e}")
+    df = df.where(pd.notnull(df), None)
+
+    rows = df.to_dict(orient="records")
+
+    # ① 主键名
+    pk_name = inspect(Article).primary_key[0].name
+
+    # ② Excel 中所有主键
+    pk_values = {row[pk_name] for row in rows if row.get(pk_name) is not None}
+
+    # ③ 查询已存在主键
+    existing = {
+        row[0]
+        for row in db.execute(
+            select(getattr(Article, pk_name)).where(
+                getattr(Article, pk_name).in_(pk_values)
+            )
+        )
+    }
+
+    new_rows = [
+        row for row in rows
+        if row.get(pk_name) not in existing
+    ]
+
+    try:
+        objects = [Article(**row) for row in new_rows]
+
+        db.bulk_save_objects(objects)
+    except Exception as e:
+        return error(str(e))
+
+    return success({
+        "inserted": len(objects),
+        "skipped": len(rows) - len(objects),
+    })

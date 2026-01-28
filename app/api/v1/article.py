@@ -1,5 +1,4 @@
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from starlette.templating import Jinja2Templates
 
@@ -36,6 +35,15 @@ def download_article(tid: int, user: User = Depends(get_current_user)):
 @router.get("/download/manul")
 async def manul_download(tid: int, downloader, save_path, user: User = Depends(get_current_user)):
     return article_service.manul_download(tid, downloader, save_path)
+
+
+@router.post("/import/excel")
+async def import_excel(file: UploadFile = File(...), db: Session = Depends(get_db),
+                       user: User = Depends(get_current_user)):
+    if not file.filename.endswith((".xlsx", ".csv", ".xls")):
+        raise HTTPException(status_code=400, detail="仅支持 excel 文件")
+
+    return await article_service.import_excel(file, db)
 
 
 templates = Jinja2Templates(directory=f"{root_path}/app/templates")
