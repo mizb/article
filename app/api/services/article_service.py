@@ -249,7 +249,12 @@ async def import_excel(file, db: Session):
             return error("不支持的文件格式")
     except Exception as e:
         return error(f"解析excel失败:{e}")
+    df = df.astype(object)
     df = df.where(pd.notnull(df), None)
+    df = df.where(pd.notna(df), None)
+    cols = ["publish_date", "size", "category"]
+    df[cols] = df[cols].astype(object)
+    df[cols] = df[cols].where(pd.notna(df[cols]), None)
 
     rows = df.to_dict(orient="records")
 
@@ -273,13 +278,11 @@ async def import_excel(file, db: Session):
         row for row in rows
         if row.get(pk_name) not in existing
     ]
-
     try:
-        objects = [Article(**row) for row in new_rows]
-
+        objects = [Article(row) for row in new_rows]
         db.bulk_save_objects(objects)
     except Exception as e:
-        return error(str(e))
+        return error(f"导入失败:{e}")
 
     return success({
         "inserted": len(objects),

@@ -10,7 +10,7 @@ from app.utils import dict_trans_obj
 class Article(Base):
     __tablename__ = "article"
 
-    tid: str = Column(Integer, nullable=False, primary_key=True)
+    tid: int = Column(Integer, nullable=False, primary_key=True)
     title: str = Column(String(255), nullable=False)
     publish_date: date = Column(Date)
     magnet: str = Column(Text, nullable=False)
