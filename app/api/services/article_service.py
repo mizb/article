@@ -1,7 +1,6 @@
 import io
 from typing import Dict, List
 
-from fastapi import File
 from sqlalchemy import func, exists, inspect, select
 from sqlalchemy.orm import Session
 
