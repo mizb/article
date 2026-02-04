@@ -14,13 +14,16 @@ class X1080X:
 
     def bypass_cf(self, url):
         if config_manager.get().FLARE_SOLVERR_URL:
+            flare_url = config_manager.get().FLARE_SOLVERR_URL.rstrip('/')
+            flare_url = flare_url if flare_url.endswith("/v1") else f"{flare_url}/v1"
             payload = {
                 "cmd": "request.get",
                 "url": url,
                 "maxTimeout": 60000,
                 "proxy": {"url": config_manager.get().PROXY},
             }
-            res = requests.post(config_manager.get().FLARE_SOLVERR_URL, headers={"Content-Type": "application/json"},
+            res = requests.post(flare_url,
+                                headers={"Content-Type": "application/json"},
                                 timeout=600000,
                                 json=payload)
             result = res.json()
@@ -71,6 +74,7 @@ class X1080X:
                 "detail_url": url,
                 "website": "x1080x"
             }
+        return None
 
 
 x1080x = X1080X()
