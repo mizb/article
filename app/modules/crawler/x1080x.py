@@ -21,6 +21,7 @@ class X1080X:
                 "proxy": {"url": config_manager.get().PROXY},
             }
             res = requests.post(config_manager.get().FLARE_SOLVERR_URL, headers={"Content-Type": "application/json"},
+                                timeout=600000,
                                 json=payload)
             result = res.json()
             if result['solution']['status'] != 200:
