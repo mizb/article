@@ -192,7 +192,7 @@ def retry_fail_tid(type_id, fail_id_list):
     fail_id_list = list(set(fail_id_list))
     if not fail_id_list:
         return []
-    section = type_id[type_id]
+    section = type_map[type_id]
     logger.info(f"[{section}] 开始补抓失败ID，共 {len(fail_id_list)} 条")
     articles = []
     for tid in fail_id_list[:]:

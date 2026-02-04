@@ -1,3 +1,4 @@
+import datetime
 import re
 from html import unescape
 from urllib.parse import parse_qs, urlparse
@@ -62,7 +63,7 @@ class X1080X:
             return {
                 "title": title,
                 "category": '',
-                "publish_date": publish_date,
+                "publish_date": publish_date or datetime.date.today().isoformat(),
                 "magnet": ','.join(magnet_links),
                 "preview_images": ",".join(img_urls),
                 "size": 0,
@@ -73,3 +74,6 @@ class X1080X:
 
 x1080x = X1080X()
 
+if __name__ == '__main__':
+    result = x1080x.get_detail_by_tid(1001956)
+    print(result)
