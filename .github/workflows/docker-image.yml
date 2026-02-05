@@ -21,7 +21,8 @@ jobs:
       
       - name: Modify Dockerfile to use official PyPI
         run: |
-          sed -i 's|https://mirrors.aliyun.com/pypi/simple/||g' Dockerfile
+          sed -i 's| -i https://mirrors.aliyun.com/pypi/simple/||g' Dockerfile
+          cat Dockerfile
       
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -42,5 +43,3 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: mimimimimimimiiii/article-master:latest
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
