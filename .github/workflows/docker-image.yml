@@ -27,15 +27,6 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/article-master
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=,format=short
 
       - name: Build and push multi-arch Docker image
         uses: docker/build-push-action@v4
@@ -43,7 +34,4 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: mimimimimimimiiii/article-master:latest
