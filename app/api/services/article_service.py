@@ -22,12 +22,16 @@ def get_article_list(db: Session, query: ArticleQuery) -> Dict:
         DownloadLog.tid == Article.tid
     )
     q = db.query(Article, in_stock_expr.label("in_stock"))
+    if query.website:
+        q = q.filter(Article.website == query.website)
     if query.keyword:
         q = q.filter(Article.title.ilike(f"%{query.keyword}%"))
     if query.section:
         q = q.filter(Article.section == query.section)
     if query.category:
         q = q.filter(Article.category == query.category)
+    if query.date_range and query.date_range.get('from') and query.date_range.get('to'):
+        q = q.filter(Article.publish_date.between(query.date_range.get('from'), query.date_range.get('to')))
     total = q.count()
     page = query.page
     offset = (page - 1) * query.page_size
@@ -96,7 +100,7 @@ def get_torrents(keyword, db: Session) -> Dict:
     for article in articles:
         torrent = {
             'id': article.tid,
-            'site': 'sehuatang',
+            'site': article.website,
             'size_mb': article.size or 0,
             'seeders': 66,
             'title': article.title,
@@ -252,6 +256,16 @@ def manul_download(tid, downloader, save_path):
         pushManager.send(convert_message_data(article, downloader, save_path))
         return success(message="成功创建下载任务")
     return error("创建下载任务失败")
+
+
+def batch_download(tid_list):
+    for tid in tid_list:
+        download_article(int(tid))
+
+
+def batch_manul_download(tid_list, downloader, save_path):
+    for tid in tid_list:
+        manul_download(int(tid), downloader, save_path)
 
 
 async def import_excel(file, db: Session):

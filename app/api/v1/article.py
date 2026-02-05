@@ -37,6 +37,16 @@ async def manul_download(tid: int, downloader, save_path, user: User = Depends(g
     return article_service.manul_download(tid, downloader, save_path)
 
 
+@router.get("/download/batch")
+def batch_download_article(tids: str, user: User = Depends(get_current_user)):
+    return article_service.batch_download(tids.split(','))
+
+
+@router.get("/download/manul/batch")
+async def batch_manul_download(tids: str, downloader, save_path, user: User = Depends(get_current_user)):
+    return article_service.batch_manul_download(tids.split(','), downloader, save_path)
+
+
 @router.post("/import/excel")
 async def import_excel(file: UploadFile = File(...), db: Session = Depends(get_db),
                        user: User = Depends(get_current_user)):
